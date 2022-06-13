@@ -1,0 +1,42 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+body{
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: antiquewhite;
+}
+.backdrop{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0,0,0, 0.6);
+    box-sizing: border-box;
+}
+.game-board{
+    height: max(50%, 510px);
+    width: max(33.3%, 650px);
+    background-color: white;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1px;
+    border: 1px solid black;
+    background-color: black;
+}
+div > svg{
+    height: 75%;
+    width: 75%;
+}
+.x-mark, .o-mark{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+}

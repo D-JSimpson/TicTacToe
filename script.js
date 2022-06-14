@@ -11,7 +11,7 @@ const GameBoard = (() =>{
             player.setPlayerNumber(2);
         }
         console.log(players);
-    }
+    };
     const getPlayers = () => {
         return [players.player1, players.player2];
     }
@@ -24,13 +24,21 @@ const GameBoard = (() =>{
             players.player2 = "";
         }
     };
-    return{addPlayer, getPlayers, deletePlayer};
+    const updateBoard = (move) =>{
+        gameboard[move] = move;
+        console.log(gameboard);
+    };
+    events.on('addPlayer', addPlayer);
+    events.on('deletePlayer', deletePlayer);
+    events.on('moveMade', updateBoard);
+
+    return{getPlayers};
 })();
 
 const Player = (name) => {
     const getName = () => name;
     const placeMarker = place =>{
-
+        events.emit('moveMade', place);
     };
     const setPlayerNumber = (index) =>{
         this.playerNumber = index;
@@ -38,6 +46,12 @@ const Player = (name) => {
     return {getName, setPlayerNumber, placeMarker};
 };
 
+const gameFlow = (() =>{
+
+})();
+const displayController = (() =>{
+
+})();
 
 
 const PlayerDisplay = (() =>{
@@ -48,7 +62,8 @@ const PlayerDisplay = (() =>{
         let value = nameBtn.value;
         if(value !== ""){
             const newPlayer = Player(value);
-            GameBoard.addPlayer(newPlayer);
+            // GameBoard.addPlayer(newPlayer);
+            events.emit("addPlayer", newPlayer);
             display();
         }
     });
@@ -105,7 +120,8 @@ const PlayerDisplay = (() =>{
         let btn = removeBtn[index];
         btn.addEventListener("click", function(){
             let li = btn.parentElement;
-            GameBoard.deletePlayer(li.player);
+            // GameBoard.deletePlayer(li.player);
+            events.emit('deletePlayer', li.player);
             display();
         });
     };

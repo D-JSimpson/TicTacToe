@@ -100,7 +100,42 @@ const gameFlow = (() =>{
         currentTurn = players[0];
         events.emit("turnChange", "x");
     };
+    const anyWinners = (gameboard) => {
+        let zero = gameboard[0];
+        let one = gameboard[1];
+        let two = gameboard[2];
+        let three = gameboard[3];
+        let four = gameboard[4];
+        let five = gameboard[5];
+        let six = gameboard[6];
+        let seven = gameboard[7];
+        let eight = gameboard[8];
+        let winPossiblities = [];
+        winPossiblities.push(zero + one + two);
+        winPossiblities.push(three + four + five);
+        winPossiblities.push(six + seven + eight);
+        winPossiblities.push(zero + three + six);
+        winPossiblities.push(one + four + seven);
+        winPossiblities.push(two + five + eight);
+        winPossiblities.push(zero + four + eight);
+        winPossiblities.push(six + four + two);
+        winPossiblities.forEach((winSet) =>{
+            if(winSet == "xxx")
+            {
+                let players = GameBoard.getPlayers();
+                events.emit('gameWon', players[0]);
+                events.emit('gameOn', false);
+            }
+            if(winSet == "ooo")
+            {
+                let players = GameBoard.getPlayers();
+                events.emit('gameWon', players[1]);
+                events.emit('gameOn', false);
+            }
+        });
+    };
     events.on('updateBoardDisplay', changeTurn);
+    events.on('updateBoardDisplay', anyWinners);
     events.on('addPlayer', setTurn);
     events.on('deletePlayer', startGame);
     events.on('newGame', setTurn);
@@ -146,7 +181,18 @@ const displayController = (() =>{
                 div.removeChild(child);
                 div.setAttribute('class', "mark");
         }
+        let JS = document.getElementById('player-name');
+        let TicTacToe = document.getElementById('has-won');
+        JS.innerText = 'JS';
+        TicTacToe.innerText = "TicTacToe";
     }
+    const displayWinner = (player) => {
+        let JS = document.getElementById('player-name');
+        let TicTacToe = document.getElementById('has-won');
+        JS.innerText = player.getName();
+        TicTacToe.innerText = "Has Won!";
+    };
+    events.on('gameWon', displayWinner);
     events.on('updateBoardDisplay', updateBoardDisplay);
     events.on('gameOn', gameOnToggle);
     events.on('reset', deleteDisplay);

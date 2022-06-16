@@ -119,20 +119,35 @@ const gameFlow = (() =>{
         winPossiblities.push(two + five + eight);
         winPossiblities.push(zero + four + eight);
         winPossiblities.push(six + four + two);
+
+        let gameTie = true;
         winPossiblities.forEach((winSet) =>{
             if(winSet == "xxx")
             {
                 let players = GameBoard.getPlayers();
                 events.emit('gameWon', players[0]);
                 events.emit('gameOn', false);
+                gameTie = false;
             }
             if(winSet == "ooo")
             {
                 let players = GameBoard.getPlayers();
                 events.emit('gameWon', players[1]);
                 events.emit('gameOn', false);
+                gameTie = false;
             }
         });
+        for(let i = 0; i <=8; i++){
+            let mark = gameboard[i];
+            if(mark == "empty")
+            {
+                gameTie = false;
+            }
+        }
+        if(gameTie){
+            events.emit('gameTie', "");
+            events.emit('gameOn', false);
+        }
     };
     events.on('updateBoardDisplay', changeTurn);
     events.on('updateBoardDisplay', anyWinners);
@@ -192,7 +207,14 @@ const displayController = (() =>{
         JS.innerText = player.getName();
         TicTacToe.innerText = "Has Won!";
     };
+    const displayTie = () => {
+        let JS = document.getElementById('player-name');
+        let TicTacToe = document.getElementById('has-won');
+        JS.innerText = "It's a Tie.";
+        TicTacToe.innerText = "Nobody Wins.";
+    };
     events.on('gameWon', displayWinner);
+    events.on('gameTie', displayTie);
     events.on('updateBoardDisplay', updateBoardDisplay);
     events.on('gameOn', gameOnToggle);
     events.on('reset', deleteDisplay);

@@ -93,10 +93,16 @@ div > svg{
     height: 75%;
     width: 75%;
 }
-.x-mark, .o-mark{
+.mark{
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: white;
     border-radius: 20px;
+}
+.x-mark{
+    color: red;
+}
+.o-mark{
+    color: blue;
 }

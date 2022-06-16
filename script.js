@@ -1,6 +1,7 @@
 const GameBoard = (() =>{
-    let gameboard = ["empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty"];
+    let gameboard = ["empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty"];
     let players = {player1: "", player2: ""};
+    let gameOn = false;
     const addPlayer = (player) => {
         if(players.player1 == ""){
             players.player1 = player;
@@ -24,18 +25,37 @@ const GameBoard = (() =>{
             players.player2 = "";
         }
     };
+    let marker = "x";
+    const changeMarker = (newMarker) =>{
+        marker = newMarker;
+    }
     const updateBoard = (move) =>{
-        gameboard[move] = move;
-        console.log(gameboard);
+        if(gameboard[move] == "empty" && gameOn == true){
+            gameboard[move] = marker;
+            console.log(gameboard);
+            events.emit('updateBoardDisplay', gameboard);
+        }
     };
+    const gameOnToggle = (bol) =>{
+        gameOn = bol;
+    };
+    const clearBoard = () =>{
+        for(let i = 0; i <=8; i++){
+            gameboard[i]= "empty";
+        }
+    }
     events.on('addPlayer', addPlayer);
     events.on('deletePlayer', deletePlayer);
+    events.on("turnChange", changeMarker);
     events.on('moveMade', updateBoard);
+    events.on('gameOn', gameOnToggle);
+    events.on('reset', clearBoard);
 
     return{getPlayers};
 })();
 
 const Player = (name) => {
+    this.playerNumber = "";
     const getName = () => name;
     const placeMarker = place =>{
         events.emit('moveMade', place);
@@ -43,13 +63,93 @@ const Player = (name) => {
     const setPlayerNumber = (index) =>{
         this.playerNumber = index;
     }
-    return {getName, setPlayerNumber, placeMarker};
+    const getPlayerNumber = () => playerNumber;
+    return {getName, setPlayerNumber, placeMarker, getPlayerNumber};
 };
 
 const gameFlow = (() =>{
-
+    let players = GameBoard.getPlayers();
+    let currentTurn = players[0];
+    const startBtn = document.querySelector('#start');
+    startBtn.addEventListener('click', function(){startGame()});
+    const startGame = () =>{
+        let players = GameBoard.getPlayers();
+        let playerOne = players[0];
+        let playerTwo = players[1];
+        if(typeof playerOne == "object" && typeof playerTwo == "object")
+        {
+            events.emit("gameOn", true);
+            events.emit('reset');
+            events.emit('newGame');
+        } else{
+            events.emit("gameOn", false);
+        }
+    };
+    const changeTurn = (noNeed) =>{
+        if(currentTurn == players[0]){
+            currentTurn = players[1];
+            events.emit("turnChange", "o");
+        }
+        else{
+            currentTurn = players[0];
+            events.emit("turnChange", "x");
+        }
+    };
+    const setTurn = (noNeed) => {
+        players = GameBoard.getPlayers();
+        currentTurn = players[0];
+        events.emit("turnChange", "x");
+    };
+    events.on('updateBoardDisplay', changeTurn);
+    events.on('addPlayer', setTurn);
+    events.on('deletePlayer', startGame);
+    events.on('newGame', setTurn);
 })();
 const displayController = (() =>{
+    const marks = Array.from(document.querySelectorAll('.mark'));
+    console.log(marks);
+    let gameOn = false;
+    const gameOnToggle = (bol) =>{
+        gameOn = bol;
+    };
+    marks.forEach((item, index) =>{
+        item.addEventListener('click', function(){
+            events.emit('moveMade', index);
+        });
+    });
+    const updateBoardDisplay = (gameboard) =>{
+        for(let i = 0; i <=8; i++){
+            let div = marks[i];
+            let mark = gameboard[i];
+            if(mark == "x"){
+                div.innerHTML=`
+                <svg  viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M13.46,12L19,17.54V19H17.54L12,13.46L6.46,19H5V17.54L10.54,12L5,6.46V5H6.46L12,10.54L17.54,5H19V6.46L13.46,12Z" />
+                </svg>`;
+                div.classList.add(gameboard[i] + "-mark");
+            }
+            else if(mark == "o"){
+                div.innerHTML=`
+                <svg  viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+                </svg>`;
+                div.classList.add(gameboard[i] + "-mark");
+            }
+
+        }
+    };
+    const deleteDisplay = () =>{
+        for(let i = 0; i <=8; i++){
+            let div = marks[i];
+            let child = div.children[0];
+            if(child !== undefined)
+                div.removeChild(child);
+                div.setAttribute('class', "mark");
+        }
+    }
+    events.on('updateBoardDisplay', updateBoardDisplay);
+    events.on('gameOn', gameOnToggle);
+    events.on('reset', deleteDisplay);
 
 })();
 

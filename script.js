@@ -161,10 +161,28 @@ const displayController = (() =>{
     let gameOn = false;
     const gameOnToggle = (bol) =>{
         gameOn = bol;
+        if(bol){
+            marks.forEach( (spot) => {
+                spot.style.backgroundColor = "rgba(255, 255, 255)";
+            });
+        }
+        else{
+            marks.forEach( (spot) => {
+                spot.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+            });
+        }
     };
     marks.forEach((item, index) =>{
         item.addEventListener('click', function(){
             events.emit('moveMade', index);
+        });
+        item.addEventListener('mouseenter', () =>{
+            if(gameOn)
+            item.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+        });
+        item.addEventListener('mouseleave', () =>{
+            if(gameOn)
+            item.style.backgroundColor = "rgba(255, 255, 255)";
         });
     });
     const updateBoardDisplay = (gameboard) =>{
@@ -233,6 +251,7 @@ const PlayerDisplay = (() =>{
             // GameBoard.addPlayer(newPlayer);
             events.emit("addPlayer", newPlayer);
             display();
+            nameBtn.value = "";
         }
     });
     const display = () => {

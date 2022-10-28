@@ -15,12 +15,15 @@ body{
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     background-color: rgba(0,0,0, 0.4);
     color: white;
     height: 20%;
-    width: max(20%, 400px);
+    width: clamp(300px, 30%, 750px);
     font-size: 60px;
-    padding-left: 20px;
+}
+#player-name{
+    text-align: center;
 }
 .player-handler{
     height: 5%;

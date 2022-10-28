@@ -2,14 +2,15 @@ const GameBoard = (() =>{
     let gameboard = ["empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty"];
     let players = {player1: "", player2: ""};
     let gameOn = false;
+    let botTurn = true;
     const addPlayer = (player) => {
         if(players.player1 == ""){
             players.player1 = player;
-            player.setPlayerNumber(1);
+            players.player1.playerNumber = 1;
         }
         else if(players.player2 == ""){
             players.player2 = player;
-            player.setPlayerNumber(2);
+            players.player2.playerNumber = 2;;
         }
         console.log(players);
     };
@@ -30,11 +31,25 @@ const GameBoard = (() =>{
         marker = newMarker;
     }
     const updateBoard = (move) =>{
+        if(gameboard[move] == "empty" && gameOn == true && botTurn){
+            gameboard[move] = marker;
+            console.log(gameboard);
+            events.emit('updateBoardDisplay', gameboard);
+            events.emit('makeAMoveBot', gameboard);
+        }
+    };
+    const updateBoardFromBot = (move) =>{
         if(gameboard[move] == "empty" && gameOn == true){
             gameboard[move] = marker;
             console.log(gameboard);
             events.emit('updateBoardDisplay', gameboard);
         }
+        if(players.player1.isABot() && players.player2.isABot())
+            events.emit('makeAMoveBot', gameboard);
+        
+    };
+    const botTurnToggle = (bol) =>{
+        botTurn = bol;
     };
     const gameOnToggle = (bol) =>{
         gameOn = bol;
@@ -50,12 +65,18 @@ const GameBoard = (() =>{
     events.on('moveMade', updateBoard);
     events.on('gameOn', gameOnToggle);
     events.on('reset', clearBoard);
+    events.on('isNotBotTurn', botTurnToggle);
+    events.on('botMoveMade', updateBoardFromBot)
 
     return{getPlayers};
 })();
 
 const Player = (name) => {
-    this.playerNumber = "";
+    let playerNumber = "";
+    let isBot = false;
+    if(name == "_BOT"){
+        isBot = true;
+    }
     const getName = () => name;
     const placeMarker = place =>{
         events.emit('moveMade', place);
@@ -63,8 +84,10 @@ const Player = (name) => {
     const setPlayerNumber = (index) =>{
         this.playerNumber = index;
     }
+    const isABot = () => isBot;
+    
     const getPlayerNumber = () => playerNumber;
-    return {getName, setPlayerNumber, placeMarker, getPlayerNumber};
+    return {getName, placeMarker, getPlayerNumber, isABot, playerNumber};
 };
 
 const gameFlow = (() =>{
@@ -78,27 +101,30 @@ const gameFlow = (() =>{
         let playerTwo = players[1];
         if(typeof playerOne == "object" && typeof playerTwo == "object")
         {
-            events.emit("gameOn", true);
             events.emit('reset');
             events.emit('newGame');
+            events.emit("gameOn", true);
         } else{
             events.emit("gameOn", false);
         }
     };
-    const changeTurn = (noNeed) =>{
+    const changeTurn = () =>{
         if(currentTurn == players[0]){
             currentTurn = players[1];
             events.emit("turnChange", "o");
+            events.emit('changePlayerColor', 2);
         }
         else{
             currentTurn = players[0];
             events.emit("turnChange", "x");
+            events.emit('changePlayerColor', 1);
         }
     };
-    const setTurn = (noNeed) => {
+    const setTurn = () => {
         players = GameBoard.getPlayers();
         currentTurn = players[0];
         events.emit("turnChange", "x");
+        events.emit('changePlayerColor', 1);
     };
     const anyWinners = (gameboard) => {
         let zero = gameboard[0];
@@ -222,7 +248,7 @@ const displayController = (() =>{
     const displayWinner = (player) => {
         let JS = document.getElementById('player-name');
         let TicTacToe = document.getElementById('has-won');
-        JS.innerText = player.getName();
+        JS.innerText = `Player ${player.playerNumber} : ${player.getName()}`;
         TicTacToe.innerText = "Has Won!";
     };
     const displayTie = () => {
@@ -242,17 +268,23 @@ const displayController = (() =>{
 
 const PlayerDisplay = (() =>{
     const addBtn = document.querySelector("#add-player");
+    const botBtn = document.querySelector("#add-bot");
     const nameBtn = document.querySelector("#name-input");
     const players = document.getElementById("players");
     addBtn.addEventListener("click", function(){
         let value = nameBtn.value;
         if(value !== ""){
             const newPlayer = Player(value);
-            // GameBoard.addPlayer(newPlayer);
             events.emit("addPlayer", newPlayer);
             display();
             nameBtn.value = "";
         }
+    });
+    botBtn.addEventListener('click', function(){
+        const newPlayer = Player("_BOT");
+        events.emit("addPlayer", newPlayer);
+        display();
+
     });
     const display = () => {
             deleteDisplay();
@@ -307,9 +339,75 @@ const PlayerDisplay = (() =>{
         let btn = removeBtn[index];
         btn.addEventListener("click", function(){
             let li = btn.parentElement;
-            // GameBoard.deletePlayer(li.player);
             events.emit('deletePlayer', li.player);
             display();
         });
     };
+    const changePlayerColor = (player) =>{
+        if(player == 1){
+            if(players.children.length !== 0){
+                let player1 = players.children[1];
+                player1.style.backgroundColor = "#2DD4BF";
+            }
+            if(players.children.length > 2){
+                let player2 = players.children[3];
+                player2.style.backgroundColor = "white";
+            }
+        }else{
+            let player1 = players.children[1];
+            player1.style.backgroundColor = "white";
+            let player2 = players.lastElementChild;
+            player2.style.backgroundColor = "#2DD4BF";
+        }
+    };
+
+    events.on('changePlayerColor', changePlayerColor);
+})();
+
+const botController = (() => {
+    let botTimeoutID
+    const makeFirstMove = (bol) =>{
+        let players = GameBoard.getPlayers();
+        if(botTimeoutID !== null)
+            clearTimeout(botTimeoutID);
+        console.log(players);
+        if(bol && players[0].isABot())
+        {
+            events.emit('isNotBotTurn', false);
+            botTimeoutID = setTimeout( () =>{
+                events.emit('botMoveMade', 4);
+                if(!(players[0].isABot() && players[1].isABot())) 
+                    events.emit('isNotBotTurn', true);
+            }, 500);
+            
+        }
+        
+            
+    };
+
+    const makeRandomMove = (gameboard) => {
+        let players = GameBoard.getPlayers();
+        if(players[0].isABot() || players[1].isABot())
+        {
+            events.emit('isNotBotTurn', false);
+            let validSpaces = [];
+            let i = 0;
+            while(i < gameboard.length){
+                if(gameboard[i] == "empty")
+                    validSpaces.push(i);
+                i++;
+            }
+            let index = Math.floor(Math.random() * validSpaces.length);
+            let selectedSpace = validSpaces[index];
+            botTimeoutID = setTimeout( () =>{
+                events.emit('botMoveMade', selectedSpace);
+                if(!(players[0].isABot() && players[1].isABot()))
+                    events.emit('isNotBotTurn', true);
+            }, 1000);
+        }
+    };
+
+
+    events.on("gameOn", makeFirstMove);
+    events.on('makeAMoveBot', makeRandomMove);
 })();

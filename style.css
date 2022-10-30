@@ -87,7 +87,7 @@ li > svg:hover{
 }
 .game-board{
     height: max(50%, 510px);
-    width: max(33.3%, 650px);
+    width: min(100vw, 650px);
     background-color: white;
     display: grid;
     grid-template-columns: repeat(3, 1fr);

@@ -50,6 +50,16 @@ button:hover{
 button:active{
     background-color: rgb(255, 102, 0)
 }
+#add-hard-bot{
+    background-color: #fd6d6d;
+}
+#add-hard-bot:hover{
+    cursor: pointer;
+    background-color: #ff3a3a;
+}
+#add-hard-bot:active{
+    background-color: #ff0000;
+}
 #players{
     list-style-type: none;
 }
